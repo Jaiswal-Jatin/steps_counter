@@ -1,0 +1,66 @@
+allprojects {
+    repositories {
+        maven {
+            url 'https://maven.aliyun.com/repository/google'
+            name 'Aliyun Google'
+        }
+        maven {
+            url 'https://maven.aliyun.com/repository/central'
+            name 'Aliyun Central'
+        }
+        maven {
+            url 'https://maven.aliyun.com/repository/jcenter'
+            name 'Aliyun JCenter'
+        }
+        google()
+        mavenCentral()
+        jcenter()
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://repo1.maven.org/maven2/' }
+    }
+    
+    gradle.projectsLoaded {
+        rootProject.allprojects {
+            buildscript {
+                repositories {
+                    maven {
+                        url 'https://maven.aliyun.com/repository/google'
+                        name 'Aliyun Google'
+                    }
+                    maven {
+                        url 'https://maven.aliyun.com/repository/central'
+                        name 'Aliyun Central'
+                    }
+                    maven {
+                        url 'https://maven.aliyun.com/repository/jcenter'
+                        name 'Aliyun JCenter'
+                    }
+                    google()
+                    mavenCentral()
+                    jcenter()
+                    maven { url 'https://jitpack.io' }
+                    maven { url 'https://repo1.maven.org/maven2/' }
+                }
+            }
+            repositories {
+                maven {
+                    url 'https://maven.aliyun.com/repository/google'
+                    name 'Aliyun Google'
+                }
+                maven {
+                    url 'https://maven.aliyun.com/repository/central'
+                    name 'Aliyun Central'
+                }
+                maven {
+                    url 'https://maven.aliyun.com/repository/jcenter'
+                    name 'Aliyun JCenter'
+                }
+                google()
+                mavenCentral()
+                jcenter()
+                maven { url 'https://jitpack.io' }
+                maven { url 'https://repo1.maven.org/maven2/' }
+            }
+        }
+    }
+}

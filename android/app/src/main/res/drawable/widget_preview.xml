@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp"
+    android:height="110dp"
+    android:viewportWidth="250"
+    android:viewportHeight="110">
+    
+    <path
+        android:fillColor="#6C5CE7"
+        android:pathData="M0,8C0,3.58 3.58,0 8,0L242,0C246.42,0 250,3.58 250,8L250,102C250,106.42 246.42,110 242,110L8,110C3.58,110 0,106.42 0,102L0,8Z" />
+    
+    <text
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:x="125dp"
+        android:y="30dp"
+        android:text="Steps Counter"
+        android:textAlignment="center"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp" />
+        
+    <text
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:x="125dp"
+        android:y="60dp"
+        android:text="10,000"
+        android:textAlignment="center"
+        android:textColor="#FFFFFF"
+        android:textSize="24sp" />
+        
+    <text
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:x="125dp"
+        android:y="80dp"
+        android:text="steps today"
+        android:textAlignment="center"
+        android:textColor="#CCFFFFFF"
+        android:textSize="10sp" />
+        
+</vector>
