@@ -1,248 +1,227 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'dart:async';
 import '../models/step_data.dart';
-// import '../services/home_widget_service.dart';
+import '../services/database_service.dart';
+import '../services/notification_service.dart';
 
-class StepCounterProvider extends ChangeNotifier {
+class StepCounterProvider with ChangeNotifier {
+  static const String _dailyGoalKey = 'daily_step_goal';
+  static const String _lastDateKey = 'last_date';
+  static const String _todayStepsKey = 'today_steps';
+
+  // Current data
   int _currentSteps = 0;
-  int _dailyGoal = 10000;
-  double _currentDistance = 0.0;
-  int _currentCalories = 0;
+  int _dailyGoal = 6000;
+  double _caloriesBurned = 0.0;
+  double _distanceWalked = 0.0;
+  Duration _activeTime = Duration.zero;
+
+  // Historical data
   List<StepData> _weeklyData = [];
-  List<WaterIntake> _todayWaterIntake = [];
-  NutritionData? _todayNutrition;
-  UserProfile? _userProfile;
-  
-  late Stream<StepCount> _stepCountStream;
-  late StreamSubscription<StepCount> _stepCountSubscription;
-  
+  List<StepData> _monthlyData = [];
+
+  // Streams
+  StreamSubscription<StepCount>? _stepCountStream;
+  StreamSubscription<PedestrianStatus>? _pedestrianStatusStream;
+
+  // Status
+  bool _isWalking = false;
+  bool _isInitialized = false;
+  String _lastUpdateDate = '';
+
   // Getters
   int get currentSteps => _currentSteps;
   int get dailyGoal => _dailyGoal;
-  double get currentDistance => _currentDistance;
-  int get currentCalories => _currentCalories;
+  double get caloriesBurned => _caloriesBurned;
+  double get distanceWalked => _distanceWalked;
+  Duration get activeTime => _activeTime;
   List<StepData> get weeklyData => _weeklyData;
-  List<WaterIntake> get todayWaterIntake => _todayWaterIntake;
-  NutritionData? get todayNutrition => _todayNutrition;
-  UserProfile? get userProfile => _userProfile;
-  
-  double get stepsProgress => _currentSteps / _dailyGoal;
-  double get waterProgress {
-    double totalWater = _todayWaterIntake.fold(0.0, (sum, intake) => sum + intake.amount);
-    return totalWater / (_userProfile?.dailyWaterGoal ?? 2500); // Convert liters to ml
-  }
-  
-  StepCounterProvider() {
-    _initializeData();
-    _requestPermissions();
-  }
+  List<StepData> get monthlyData => _monthlyData;
+  bool get isWalking => _isWalking;
+  bool get isInitialized => _isInitialized;
 
-  Future<void> _initializeData() async {
-    await _loadUserProfile();
-    await _loadTodayData();
-    await _loadWeeklyData();
-    await _loadWaterIntake();
-    await _loadNutritionData();
+  double get goalProgress =>
+      _dailyGoal > 0 ? (_currentSteps / _dailyGoal).clamp(0.0, 1.0) : 0.0;
+  bool get goalAchieved => _currentSteps >= _dailyGoal;
+
+  // Additional computed properties
+  double get currentDistance => _distanceWalked;
+  int get currentCalories => _caloriesBurned.round();
+
+  Future<void> initialize() async {
+    try {
+      await _requestPermissions();
+      await _loadStoredData();
+      await _initializePedometer();
+      await _loadHistoricalData();
+      _isInitialized = true;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error initializing step counter: $e');
+    }
   }
 
   Future<void> _requestPermissions() async {
-    var status = await Permission.activityRecognition.request();
-    if (status.isGranted) {
-      _initPedometer();
+    final status = await Permission.activityRecognition.request();
+    if (status != PermissionStatus.granted) {
+      debugPrint('Activity recognition permission not granted');
     }
   }
 
-  void _initPedometer() {
-    _stepCountStream = Pedometer.stepCountStream;
-    _stepCountSubscription = _stepCountStream.listen(_onStepCount);
-  }
+  Future<void> _loadStoredData() async {
+    final prefs = await SharedPreferences.getInstance();
+    _dailyGoal = prefs.getInt(_dailyGoalKey) ?? 6000;
+    _lastUpdateDate = prefs.getString(_lastDateKey) ?? '';
 
-  void _onStepCount(StepCount event) {
-    _currentSteps = event.steps;
-    _calculateDistance();
-    _calculateCalories();
-    _saveTodayData();
-    _updateHomeWidget();
-    notifyListeners();
-  }
-
-  void _calculateDistance() {
-    // Average step length for adults is about 0.78 meters
-    double stepLength = 0.78;
-    if (_userProfile != null) {
-      // More accurate calculation based on height
-      stepLength = _userProfile!.height * 0.45 / 100; // Convert cm to meters
-    }
-    _currentDistance = (_currentSteps * stepLength) / 1000; // Convert to kilometers
-  }
-
-  void _calculateCalories() {
-    if (_userProfile != null) {
-      // MET value for walking is approximately 3.5
-      double met = 3.5;
-      double weightInKg = _userProfile!.weight;
-      double timeInHours = _currentSteps / 2000; // Assuming 2000 steps per hour
-      _currentCalories = (met * weightInKg * timeInHours).round();
+    final today = DateTime.now().toIso8601String().split('T')[0];
+    if (_lastUpdateDate != today) {
+      // New day, reset steps
+      _currentSteps = 0;
+      await prefs.setString(_lastDateKey, today);
+      await prefs.setInt(_todayStepsKey, 0);
     } else {
-      // Default calculation
-      _currentCalories = (_currentSteps * 0.04).round();
+      _currentSteps = prefs.getInt(_todayStepsKey) ?? 0;
     }
+
+    _calculateDerivedValues();
   }
 
-  Future<void> _updateHomeWidget() async {
+  Future<void> _initializePedometer() async {
     try {
-      // Update home widget with new steps - commented out temporarily
-      // await HomeWidgetService.updateStepsWidget(
-      //   currentSteps: _currentSteps,
-      //   dailyGoal: _dailyGoal,
-      //   distance: _currentDistance,
-      //   calories: _currentCalories,
-      // );
+      _stepCountStream = Pedometer.stepCountStream.listen(
+        _onStepCount,
+        onError: _onStepCountError,
+      );
+
+      _pedestrianStatusStream = Pedometer.pedestrianStatusStream.listen(
+        _onPedestrianStatusChanged,
+        onError: _onPedestrianStatusError,
+      );
     } catch (e) {
-      if (kDebugMode) {
-        print('Error updating home widget: $e');
+      debugPrint('Error initializing pedometer: $e');
+    }
+  }
+
+  void _onStepCount(StepCount event) async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().split('T')[0];
+
+    if (_lastUpdateDate != today) {
+      // New day detected
+      await _saveCurrentDayData();
+      _currentSteps = 0;
+      _lastUpdateDate = today;
+      await prefs.setString(_lastDateKey, today);
+    }
+
+    final previousSteps = _currentSteps;
+    _currentSteps = event.steps;
+
+    // Only update if steps increased (prevent negative steps)
+    if (_currentSteps > previousSteps) {
+      await prefs.setInt(_todayStepsKey, _currentSteps);
+      _calculateDerivedValues();
+
+      // Check for goal achievement
+      if (previousSteps < _dailyGoal && _currentSteps >= _dailyGoal) {
+        await NotificationService.showGoalAchievedNotification(_currentSteps);
       }
+
+      // Save to database periodically
+      if (_currentSteps % 100 == 0) {
+        await _saveCurrentDayData();
+      }
+
+      notifyListeners();
     }
   }
 
-  Future<void> _loadUserProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    final profileJson = prefs.getString('user_profile');
-    if (profileJson != null) {
-      final profileData = json.decode(profileJson);
-      _userProfile = UserProfile.fromJson(profileData);
-      _dailyGoal = _userProfile!.dailyStepsGoal;
-    }
+  void _onStepCountError(error) {
+    debugPrint('Step count stream error: $error');
   }
 
-  Future<void> updateUserProfile(UserProfile profile) async {
-    _userProfile = profile;
-    _dailyGoal = profile.dailyStepsGoal;
-    
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_profile', json.encode(profile.toJson()));
-    
+  void _onPedestrianStatusChanged(PedestrianStatus event) {
+    _isWalking = event.status == 'walking';
     notifyListeners();
   }
 
-  Future<void> _saveTodayData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now();
-    final todayKey = 'steps_${today.year}_${today.month}_${today.day}';
-    
+  void _onPedestrianStatusError(error) {
+    debugPrint('Pedestrian status stream error: $error');
+  }
+
+  void _calculateDerivedValues() {
+    // Calculate calories (rough estimate: 0.04 calories per step)
+    _caloriesBurned = _currentSteps * 0.04;
+
+    // Calculate distance (rough estimate: 0.762 meters per step)
+    _distanceWalked = _currentSteps * 0.000762; // in kilometers
+
+    // Calculate active time (rough estimate: 1 minute per 120 steps)
+    final activeMinutes = _currentSteps ~/ 120;
+    _activeTime = Duration(minutes: activeMinutes);
+  }
+
+  Future<void> _saveCurrentDayData() async {
     final stepData = StepData(
-      date: today,
-      steps: _currentSteps,
-      distance: _currentDistance,
-      calories: _currentCalories,
-    );
-    
-    await prefs.setString(todayKey, json.encode(stepData.toJson()));
-  }
-
-  Future<void> _loadTodayData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now();
-    final todayKey = 'steps_${today.year}_${today.month}_${today.day}';
-    
-    final stepDataJson = prefs.getString(todayKey);
-    if (stepDataJson != null) {
-      final stepData = StepData.fromJson(json.decode(stepDataJson));
-      _currentSteps = stepData.steps;
-      _currentDistance = stepData.distance;
-      _currentCalories = stepData.calories;
-    }
-  }
-
-  Future<void> _loadWeeklyData() async {
-    final prefs = await SharedPreferences.getInstance();
-    _weeklyData.clear();
-    
-    for (int i = 6; i >= 0; i--) {
-      final date = DateTime.now().subtract(Duration(days: i));
-      final key = 'steps_${date.year}_${date.month}_${date.day}';
-      final stepDataJson = prefs.getString(key);
-      
-      if (stepDataJson != null) {
-        final stepData = StepData.fromJson(json.decode(stepDataJson));
-        _weeklyData.add(stepData);
-      } else {
-        _weeklyData.add(StepData(
-          date: date,
-          steps: 0,
-          distance: 0.0,
-          calories: 0,
-        ));
-      }
-    }
-  }
-
-  Future<void> addWaterIntake(double amount) async {
-    final intake = WaterIntake(
       date: DateTime.now(),
-      amount: amount,
+      steps: _currentSteps,
+      calories: _caloriesBurned,
+      distance: _distanceWalked,
+      activeTime: _activeTime,
+      goalAchieved: goalAchieved,
     );
-    
-    _todayWaterIntake.add(intake);
-    await _saveWaterIntake();
-    notifyListeners();
+
+    await DatabaseService.instance.insertOrUpdateStepData(stepData);
   }
 
-  Future<void> _saveWaterIntake() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now();
-    final todayKey = 'water_${today.year}_${today.month}_${today.day}';
-    
-    final waterJson = _todayWaterIntake.map((intake) => intake.toJson()).toList();
-    await prefs.setString(todayKey, json.encode(waterJson));
-  }
-
-  Future<void> _loadWaterIntake() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now();
-    final todayKey = 'water_${today.year}_${today.month}_${today.day}';
-    
-    final waterJson = prefs.getString(todayKey);
-    if (waterJson != null) {
-      final waterList = json.decode(waterJson) as List;
-      _todayWaterIntake = waterList.map((item) => WaterIntake.fromJson(item)).toList();
+  Future<void> _loadHistoricalData() async {
+    try {
+      _weeklyData = await DatabaseService.instance.getWeeklyData();
+      _monthlyData = await DatabaseService.instance.getMonthlyData();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading historical data: $e');
     }
   }
 
-  Future<void> updateNutrition(NutritionData nutrition) async {
-    _todayNutrition = nutrition;
-    await _saveNutritionData();
+  Future<void> setDailyGoal(int goal) async {
+    _dailyGoal = goal;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_dailyGoalKey, goal);
     notifyListeners();
   }
 
-  Future<void> _saveNutritionData() async {
-    if (_todayNutrition == null) return;
-    
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now();
-    final todayKey = 'nutrition_${today.year}_${today.month}_${today.day}';
-    
-    await prefs.setString(todayKey, json.encode(_todayNutrition!.toJson()));
-  }
-
-  Future<void> _loadNutritionData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateTime.now();
-    final todayKey = 'nutrition_${today.year}_${today.month}_${today.day}';
-    
-    final nutritionJson = prefs.getString(todayKey);
-    if (nutritionJson != null) {
-      _todayNutrition = NutritionData.fromJson(json.decode(nutritionJson));
-    }
+  Future<void> refreshData() async {
+    await _loadHistoricalData();
   }
 
   @override
   void dispose() {
-    _stepCountSubscription.cancel();
+    _stepCountStream?.cancel();
+    _pedestrianStatusStream?.cancel();
     super.dispose();
+  }
+
+  // Manual step addition for testing
+  Future<void> addSteps(int steps) async {
+    _currentSteps += steps;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_todayStepsKey, _currentSteps);
+    _calculateDerivedValues();
+    await _saveCurrentDayData();
+    notifyListeners();
+  }
+
+  // Reset today's steps
+  Future<void> resetTodaySteps() async {
+    _currentSteps = 0;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_todayStepsKey, 0);
+    _calculateDerivedValues();
+    await _saveCurrentDayData();
+    notifyListeners();
   }
 }

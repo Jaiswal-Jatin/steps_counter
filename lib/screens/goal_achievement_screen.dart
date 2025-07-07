@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/step_counter_provider.dart';
-import '../theme/app_theme.dart';
-import '../services/ad_service.dart';
+import '../core/constants/app_colors.dart';
+import '../core/constants/app_constants.dart';
 
 class GoalAchievementScreen extends StatefulWidget {
   const GoalAchievementScreen({super.key});
@@ -23,13 +23,9 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    _celebrationAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _celebrationController,
-      curve: Curves.elasticOut,
-    ));
+    _celebrationAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _celebrationController, curve: Curves.elasticOut),
+    );
 
     _celebrationController.forward();
   }
@@ -56,7 +52,7 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
       body: Consumer<StepCounterProvider>(
         builder: (context, provider, child) {
           final isGoalReached = provider.currentSteps >= provider.dailyGoal;
-          
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
@@ -78,7 +74,10 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
     );
   }
 
-  Widget _buildCelebrationCard(bool isGoalReached, StepCounterProvider provider) {
+  Widget _buildCelebrationCard(
+    bool isGoalReached,
+    StepCounterProvider provider,
+  ) {
     return AnimatedBuilder(
       animation: _celebrationAnimation,
       builder: (context, child) {
@@ -87,8 +86,8 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
-              gradient: isGoalReached 
-                  ? AppColors.secondaryGradient 
+              gradient: isGoalReached
+                  ? AppColors.secondaryGradient
                   : AppColors.primaryGradient,
               borderRadius: AppBorderRadius.largeRadius,
               boxShadow: AppShadows.card,
@@ -110,7 +109,7 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  isGoalReached 
+                  isGoalReached
                       ? 'Congratulations! You\'ve reached your daily step goal of ${provider.dailyGoal} steps!'
                       : 'You\'re ${provider.dailyGoal - provider.currentSteps} steps away from your goal!',
                   style: AppTextStyles.bodyMedium.copyWith(
@@ -170,8 +169,11 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
   }
 
   Widget _buildProgressCard(StepCounterProvider provider) {
-    final progress = (provider.currentSteps / provider.dailyGoal * 100).clamp(0, 100);
-    
+    final progress = (provider.currentSteps / provider.dailyGoal * 100).clamp(
+      0,
+      100,
+    );
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -182,10 +184,7 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Daily Progress',
-            style: AppTextStyles.headline6,
-          ),
+          Text('Daily Progress', style: AppTextStyles.headline6),
           const SizedBox(height: AppSpacing.md),
           LinearProgressIndicator(
             value: progress / 100,
@@ -230,16 +229,9 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
         children: [
           Row(
             children: [
-              Icon(
-                Icons.card_giftcard,
-                color: AppColors.accent,
-                size: 24,
-              ),
+              Icon(Icons.card_giftcard, color: AppColors.accent, size: 24),
               const SizedBox(width: AppSpacing.sm),
-              Text(
-                'Rewards',
-                style: AppTextStyles.headline6,
-              ),
+              Text('Rewards', style: AppTextStyles.headline6),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -279,16 +271,20 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
     );
   }
 
-  Widget _buildRewardItem(String title, String description, IconData icon, Color color, bool isEarned) {
+  Widget _buildRewardItem(
+    String title,
+    String description,
+    IconData icon,
+    Color color,
+    bool isEarned,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: AppBorderRadius.mediumRadius,
-        border: Border.all(
-          color: color.withOpacity(0.2),
-        ),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Row(
         children: [
@@ -322,29 +318,24 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
             ),
           ),
           if (isEarned)
-            Icon(
-              Icons.check_circle,
-              color: AppColors.success,
-              size: 20,
-            )
+            Icon(Icons.check_circle, color: AppColors.success, size: 20)
           else
             ElevatedButton(
               onPressed: () {
-                // Show rewarded ad
-                AdService().showRewardedAd(
-                  onUserEarnedReward: (ad, reward) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Earned ${reward.amount} ${reward.type}!'),
-                        backgroundColor: AppColors.success,
-                      ),
-                    );
-                  },
+                // Simple reward without ads
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Reward claimed! 🎉'),
+                    backgroundColor: AppColors.success,
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: color,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               child: const Text('Claim', style: TextStyle(fontSize: 12)),
             ),
@@ -364,10 +355,7 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Share Your Achievement',
-            style: AppTextStyles.headline6,
-          ),
+          Text('Share Your Achievement', style: AppTextStyles.headline6),
           const SizedBox(height: AppSpacing.md),
           Text(
             'Let your friends know about your fitness progress!',
@@ -384,7 +372,9 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
                     // Share functionality - would implement actual sharing
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Shared: I walked ${provider.currentSteps} steps today!'),
+                        content: Text(
+                          'Shared: I walked ${provider.currentSteps} steps today!',
+                        ),
                         backgroundColor: AppColors.success,
                       ),
                     );
@@ -441,10 +431,7 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
                 size: 24,
               ),
               const SizedBox(width: AppSpacing.sm),
-              Text(
-                'Streak Challenge',
-                style: AppTextStyles.headline6,
-              ),
+              Text('Streak Challenge', style: AppTextStyles.headline6),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -489,7 +476,9 @@ class _GoalAchievementScreenState extends State<GoalAchievementScreen>
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: completed ? AppColors.accent : AppColors.textLight.withOpacity(0.2),
+            color: completed
+                ? AppColors.accent
+                : AppColors.textLight.withOpacity(0.2),
             shape: BoxShape.circle,
           ),
           child: Icon(

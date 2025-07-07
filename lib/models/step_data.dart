@@ -1,139 +1,93 @@
 class StepData {
   final DateTime date;
   final int steps;
+  final double calories;
   final double distance;
-  final int calories;
+  final Duration activeTime;
+  final bool goalAchieved;
+  final int? id;
 
   StepData({
     required this.date,
     required this.steps,
-    required this.distance,
     required this.calories,
+    required this.distance,
+    required this.activeTime,
+    required this.goalAchieved,
+    this.id,
   });
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toMap() {
     return {
-      'date': date.millisecondsSinceEpoch,
+      'id': id,
+      'date': date.toIso8601String(),
       'steps': steps,
-      'distance': distance,
       'calories': calories,
+      'distance': distance,
+      'activeTimeMinutes': activeTime.inMinutes,
+      'goalAchieved': goalAchieved ? 1 : 0,
     };
   }
 
-  factory StepData.fromJson(Map<String, dynamic> json) {
+  factory StepData.fromMap(Map<String, dynamic> map) {
     return StepData(
-      date: DateTime.fromMillisecondsSinceEpoch(json['date']),
-      steps: json['steps'],
-      distance: json['distance'],
-      calories: json['calories'],
+      id: map['id']?.toInt(),
+      date: DateTime.parse(map['date']),
+      steps: map['steps']?.toInt() ?? 0,
+      calories: map['calories']?.toDouble() ?? 0.0,
+      distance: map['distance']?.toDouble() ?? 0.0,
+      activeTime: Duration(minutes: map['activeTimeMinutes']?.toInt() ?? 0),
+      goalAchieved: (map['goalAchieved'] ?? 0) == 1,
     );
   }
-}
 
-class UserProfile {
-  final String name;
-  final double height; // in cm
-  final double weight; // in kg
-  final int age;
-  final String gender;
-  final int dailyStepsGoal;
-  final int dailyCaloriesGoal;
-  final double dailyWaterGoal; // in liters
-
-  UserProfile({
-    required this.name,
-    required this.height,
-    required this.weight,
-    required this.age,
-    required this.gender,
-    this.dailyStepsGoal = 10000,
-    this.dailyCaloriesGoal = 2000,
-    this.dailyWaterGoal = 2.5,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'height': height,
-      'weight': weight,
-      'age': age,
-      'gender': gender,
-      'dailyStepsGoal': dailyStepsGoal,
-      'dailyCaloriesGoal': dailyCaloriesGoal,
-      'dailyWaterGoal': dailyWaterGoal,
-    };
-  }
-
-  factory UserProfile.fromJson(Map<String, dynamic> json) {
-    return UserProfile(
-      name: json['name'],
-      height: json['height'],
-      weight: json['weight'],
-      age: json['age'],
-      gender: json['gender'],
-      dailyStepsGoal: json['dailyStepsGoal'] ?? 10000,
-      dailyCaloriesGoal: json['dailyCaloriesGoal'] ?? 2000,
-      dailyWaterGoal: json['dailyWaterGoal'] ?? 2.5,
+  StepData copyWith({
+    DateTime? date,
+    int? steps,
+    double? calories,
+    double? distance,
+    Duration? activeTime,
+    bool? goalAchieved,
+    int? id,
+  }) {
+    return StepData(
+      date: date ?? this.date,
+      steps: steps ?? this.steps,
+      calories: calories ?? this.calories,
+      distance: distance ?? this.distance,
+      activeTime: activeTime ?? this.activeTime,
+      goalAchieved: goalAchieved ?? this.goalAchieved,
+      id: id ?? this.id,
     );
   }
-}
 
-class WaterIntake {
-  final DateTime date;
-  final double amount; // in ml
-
-  WaterIntake({
-    required this.date,
-    required this.amount,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'date': date.millisecondsSinceEpoch,
-      'amount': amount,
-    };
+  @override
+  String toString() {
+    return 'StepData(id: $id, date: $date, steps: $steps, calories: $calories, distance: $distance, activeTime: $activeTime, goalAchieved: $goalAchieved)';
   }
 
-  factory WaterIntake.fromJson(Map<String, dynamic> json) {
-    return WaterIntake(
-      date: DateTime.fromMillisecondsSinceEpoch(json['date']),
-      amount: json['amount'],
-    );
-  }
-}
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
 
-class NutritionData {
-  final DateTime date;
-  final double carbs;
-  final double protein;
-  final double fat;
-  final int totalCalories;
-
-  NutritionData({
-    required this.date,
-    required this.carbs,
-    required this.protein,
-    required this.fat,
-    required this.totalCalories,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'date': date.millisecondsSinceEpoch,
-      'carbs': carbs,
-      'protein': protein,
-      'fat': fat,
-      'totalCalories': totalCalories,
-    };
+    return other is StepData &&
+        other.date == date &&
+        other.steps == steps &&
+        other.calories == calories &&
+        other.distance == distance &&
+        other.activeTime == activeTime &&
+        other.goalAchieved == goalAchieved &&
+        other.id == id;
   }
 
-  factory NutritionData.fromJson(Map<String, dynamic> json) {
-    return NutritionData(
-      date: DateTime.fromMillisecondsSinceEpoch(json['date']),
-      carbs: json['carbs'],
-      protein: json['protein'],
-      fat: json['fat'],
-      totalCalories: json['totalCalories'],
-    );
+  @override
+  int get hashCode {
+    return date.hashCode ^
+        steps.hashCode ^
+        calories.hashCode ^
+        distance.hashCode ^
+        activeTime.hashCode ^
+        goalAchieved.hashCode ^
+        id.hashCode;
   }
 }
