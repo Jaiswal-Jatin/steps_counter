@@ -14,24 +14,23 @@ dependencies:
   # UI and Icons
   cupertino_icons: ^1.0.8
   
+  
   # For step counting and fitness tracking
-  pedometer: ^4.0.2
+  pedometer: ^4.1.1
   permission_handler: ^11.3.1
   
   # For local storage and data persistence
   shared_preferences: ^2.2.3
-  sqflite: ^2.3.0
   path: ^1.9.0
-  
-  # For charts and graphs
-  fl_chart: ^0.68.0
-  
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
   # For notifications
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
   
   # For date and time formatting
-  intl: ^0.19.0
+  intl: ^0.20.2 # Updated to resolve version conflict
   
   # For state management
   provider: ^6.1.2
@@ -43,17 +42,39 @@ dependencies:
   # For theming and UI
   flutter_colorpicker: ^1.1.0
   google_fonts: ^6.2.1
+
+  # For charts and graphs
+  fl_chart: ^0.68.0
+
+  # For sharing and exporting
+  share_plus: ^9.0.0
+  csv: ^6.0.0
   
   # For path/icons
-  path_provider: ^2.1.4
+  path_provider: ^2.1.5
   flutter_svg: ^2.0.10+1
   
   # For device info
   device_info_plus: ^10.1.2
   
-  # For weather API (optional)
+  # For background processing
+  flutter_background: ^1.2.0
+  
+  # For image picking
   http: ^1.2.2
-  geolocator: ^12.0.0
+  image_picker: ^1.1.2
+
+# firebase 
+  firebase_core: ^3.2.0
+  firebase_auth: ^5.1.2
+  cloud_firestore: ^5.1.0
+  firebase_storage: ^12.1.1
+
+# Authentication dependencies
+  google_sign_in: ^6.2.0 # Re-added
+  firebase_ui_auth: ^1.12.0
+  workmanager: ^0.9.0+3
+  connectivity_plus: ^6.1.5
 
 dev_dependencies:
   flutter_test:
@@ -65,6 +86,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  build_runner: ^2.4.13
+  hive_generator: ^2.0.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

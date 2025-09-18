@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "472065356722",
+    "project_id": "stepcount-9d910",
+    "storage_bucket": "stepcount-9d910.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:472065356722:android:1e61724f9c44ce279a6aab",
+        "android_client_info": {
+          "package_name": "com.example.steps_conter_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "472065356722-5ic1bl9vrp6sf7ussljucb78fih04e79.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDruutSHk6EZ3VQPdDZSoa-rsw3fg3CwLw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "472065356722-5ic1bl9vrp6sf7ussljucb78fih04e79.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "472065356722-59qs95qnmrcctffljk1t2s806pgh6e5d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.stepsConterApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
