@@ -8,6 +8,7 @@
 
     <!-- Required for Foreground Service and Notifications on Android 13+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
 
     <!-- Optional: For Health Connect integration -->
     <uses-permission android:name="android.permission.health.READ_STEPS"/>
@@ -17,7 +18,7 @@
 
     <application
         android:label="Steps Counter"
-        android:name=".MainApplication"
+        android:name="com.example.steps_conter_app.MainApplication"
         android:icon="@mipmap/ic_launcher" android:enableOnBackInvokedCallback="true">
 
         <!-- Widget Receiver -->
@@ -37,7 +38,8 @@
         <service
             android:name=".StepCounterService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="health" />
 
         <receiver android:name=".BootReceiver" android:exported="false">
             <intent-filter>

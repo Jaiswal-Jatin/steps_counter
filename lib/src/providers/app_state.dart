@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show File, Platform;
-import 'package:pedometer/pedometer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
@@ -21,6 +20,7 @@ class AppState extends ChangeNotifier {
 
   // Channel for native communication
   static const _platform = MethodChannel('com.example.steps_counter_app/background_service');
+  static const _eventChannel = EventChannel('com.example.steps_counter_app/step_updates');
 
   // Steps and metrics
   int stepsToday = 0;
@@ -40,8 +40,7 @@ class AppState extends ChangeNotifier {
   // Public getter for analytics screen
   Map<String, int> get stepHistory => Map.unmodifiable(_stepHistory);
 
-  int _stepsAtStartOfDay = 0;
-  StreamSubscription<StepCount>? _stepCountSubscription;
+  StreamSubscription? _stepCountSubscription;
 
   String? userName;
   String? photoURL;
@@ -169,40 +168,20 @@ class AppState extends ChangeNotifier {
 
   void _listenToStepCount() {
     _stepCountSubscription?.cancel();
-    _stepCountSubscription = Pedometer.stepCountStream.listen(
-      _onStepCount,
-      onError: _onStepCountError,
+    _stepCountSubscription = _eventChannel.receiveBroadcastStream().listen(
+      (dynamic steps) {
+        // The native service is the source of truth for steps.
+        // It handles persistence, daily resets, etc.
+        if (steps is int && steps != stepsToday) {
+          _updateSteps(steps);
+        }
+      },
+      onError: (dynamic error) {
+        if (kDebugMode) {
+          print('Received error from step count stream: $error');
+        }
+      },
     );
-  }
-
-  void _onStepCount(StepCount event) async {
-    final sp = await SharedPreferences.getInstance();
-    final nowDay = _dateOnly(DateTime.now());
-
-    if (nowDay.isAfter(_today)) {
-      await _persistTodayToHistory();
-      _today = nowDay;
-      stepsToday = 0;
-      _stepsAtStartOfDay = event.steps;
-      if (_user != null) await sp.setInt('stepsAtStartOfDay_${_user!.uid}', _stepsAtStartOfDay);
-    }
-
-    if (_stepsAtStartOfDay == 0) {
-      _stepsAtStartOfDay = event.steps - stepsToday;
-    }
-
-    final newStepsToday = event.steps - _stepsAtStartOfDay;
-
-    if (newStepsToday >= 0 && newStepsToday != stepsToday) {
-      stepsToday = newStepsToday;
-      _updateSteps(stepsToday);
-    }
-  }
-
-  void _onStepCountError(error) {
-    if (kDebugMode) {
-      print("Pedometer Error: $error");
-    }
   }
 
   Future<void> _loadUserData() async {
@@ -270,7 +249,6 @@ class AppState extends ChangeNotifier {
     }
 
     stepsToday = sp.getInt('stepsToday_$uid') ?? 0;
-    _stepsAtStartOfDay = sp.getInt('stepsAtStartOfDay_$uid') ?? 0;
 
     notifyListeners();
   }
@@ -319,6 +297,7 @@ class AppState extends ChangeNotifier {
     final sp = await SharedPreferences.getInstance();
     if (_user != null) await sp.setInt('stepsToday_${_user!.uid}', stepsToday);
     await HomeWidget.saveWidgetData<int>('steps', steps);
+    await HomeWidget.saveWidgetData<int>('stepGoal', stepGoal);
     await HomeWidget.updateWidget(
       name: 'StepsWidgetProvider',
       androidName: 'StepsWidgetProvider',
