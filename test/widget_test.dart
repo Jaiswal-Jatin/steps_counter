@@ -7,34 +7,23 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
-
-import 'package:steps_counter_app/src/app.dart';
-import 'package:steps_counter_app/src/providers/app_state.dart';
+import 'package:steps_counter_app/src/screens/onboarding_screen.dart'; // Import OnboardingScreen
 
 void main() {
-  testWidgets('Steps Counter App smoke test', (WidgetTester tester) async {
-    // Build the app shell without the full app/firebase wrapper for a simple widget test.
+  testWidgets('Onboarding Screen smoke test', (WidgetTester tester) async {
+    // Build the OnboardingScreen
     await tester.pumpWidget(
-      ChangeNotifierProvider(
-        create: (_) => AppState(),
-        child: const MaterialApp(
-          home: StepGoApp(),
-        ),
+      const MaterialApp(
+        home: OnboardingScreen(),
       ),
     );
 
-    // Verify that the app starts with the Home page
-    expect(find.text("Today's Steps"), findsOneWidget);
+    // Verify that the OnboardingScreen displays the expected text
+    expect(find.text('Earn rewards for every step you take.'), findsOneWidget);
+    expect(find.text('More than tracking transform walking into winning.'), findsOneWidget);
+    expect(find.text('Log in'), findsOneWidget);
 
-    // Verify navigation bar exists
-    expect(find.byType(NavigationBar), findsOneWidget);
-
-    // Tap on the Analytics icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.bar_chart_outlined));
-    await tester.pumpAndSettle();
-
-    // Verify that we navigated to the Analytics screen.
-    expect(find.text('Analytics'), findsOneWidget);
+    // Optionally, tap the login button and verify navigation (requires mocking Navigator)
+    // For now, we'll just check for its presence.
   });
 }

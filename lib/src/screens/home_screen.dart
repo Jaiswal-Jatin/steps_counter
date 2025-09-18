@@ -55,6 +55,7 @@ class HomeScreen extends StatelessWidget {
                 Row(
                   children: [
                     Text("Today's Steps", style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(width: 8),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -75,7 +76,7 @@ class HomeScreen extends StatelessWidget {
                     child: SizedBox(
                       height: 180,
                       width: 180,
-                      child: Lottie.asset('assets/animations/walking in city park.json'),
+                      child: Lottie.asset('assets/animations/zombie walk.json'),
                     ),
                   ),
                 ),

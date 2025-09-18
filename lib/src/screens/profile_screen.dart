@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:steps_counter_app/src/providers/app_state.dart';
+import 'package:steps_counter_app/src/screens/edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -8,6 +10,18 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final user = FirebaseAuth.instance.currentUser;
+
+    // Calculate age
+    String ageString = '';
+    if (state.dob != null) {
+      final today = DateTime.now();
+      int age = today.year - state.dob!.year;
+      if (today.month < state.dob!.month || (today.month == state.dob!.month && today.day < state.dob!.day)) {
+        age--;
+      }
+      ageString = '$age years old';
+    }
 
     return SafeArea(
       child: ListView(
@@ -19,21 +33,27 @@ class ProfileScreen extends StatelessWidget {
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  const CircleAvatar(radius: 22, child: Icon(Icons.person)),
-                  const SizedBox(width: 12),
-                  Consumer<AppState>(
-                    builder: (context, state, _) {
-                      final userName = state.userName ?? 'Guest User';
-                      return Text(userName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16));
-                    },
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundImage: state.photoURL != null ? NetworkImage(state.photoURL!) : null,
+                    child: state.photoURL == null ? const Icon(Icons.person, size: 40) : null,
                   ),
-                  const Spacer(),
-                ]),
-                const SizedBox(height: 8),
-                Text('Keep walking towards your goals!', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey)),
-              ]),
+                  const SizedBox(height: 12),
+                  Text(state.userName ?? 'Guest User', style: Theme.of(context).textTheme.titleLarge),
+                  if (ageString.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(ageString, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey)),
+                  ],
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    label: const Text('Edit Profile'),
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditProfileScreen())),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -67,36 +87,24 @@ class ProfileScreen extends StatelessWidget {
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Preferences', style: TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 12),
-                _toggle('Dark Mode', state.darkMode, state.setDarkMode),
-                _toggle('Vibration', state.vibrate, state.setVibrate),
-                _toggle('Battery Saver', state.batterySaver, state.setBatterySaver),
-              ]),
+              child: _toggle('Dark Mode', state.darkMode, state.setDarkMode),
             ),
           ),
           const SizedBox(height: 16),
 
-          // Water
+          // Notifications
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Water', style: TextStyle(fontWeight: FontWeight.w700)),
+                const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
+                _toggle('Milestone Notifications', state.milestoneNotifications, state.setMilestoneNotifications),
+                const Divider(),
+                _toggle('Water Reminders', state.waterReminders, state.setWaterReminders),
                 Row(children: [
-                  const Icon(Icons.water_drop, color: Colors.blue),
-                  const SizedBox(width: 8),
-                  Text('Today: ${state.waterMlToday} ml'),
+                  const Text('Remind me every'),
                   const Spacer(),
-                  TextButton(onPressed: () => state.addWater(250), child: const Text('+250 ml')),
-                  TextButton(onPressed: () => state.addWater(500), child: const Text('+500 ml')),
-                ]),
-                const SizedBox(height: 12),
-                Row(children: [
-                  const Text('Reminders every'),
-                  const SizedBox(width: 8),
                   DropdownButton<int>(
                     value: state.waterInterval.inMinutes,
                     items: const [
@@ -106,30 +114,19 @@ class ProfileScreen extends StatelessWidget {
                     ],
                     onChanged: (v) { if (v != null) state.setWaterInterval(Duration(minutes: v)); },
                   ),
-                  const SizedBox(width: 12),
-                  Switch(value: state.waterReminders, onChanged: (v) => state.setWaterReminders(v)),
                 ]),
-                const SizedBox(height: 12),
-                // Recent entries
-                if (state.waterEntries.isEmpty)
-                  const Text('No water logged yet.', style: TextStyle(color: Colors.grey))
-                else
-                  Column(
-                    children: state.waterEntries.take(5).map((e) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.local_drink, size: 18),
-                          const SizedBox(width: 8),
-                          Text('${e.ml} ml'),
-                          const Spacer(),
-                          Text(TimeOfDay.fromDateTime(e.at).format(context), style: const TextStyle(color: Colors.grey)),
-                        ],
-                      ),
-                    )).toList(),
-                  )
               ]),
             ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.logout),
+            label: const Text('Logout'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade400,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => FirebaseAuth.instance.signOut(),
           ),
         ],
       ),
