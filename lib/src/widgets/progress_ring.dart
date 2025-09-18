@@ -5,7 +5,8 @@ import 'package:steps_counter_app/src/theme.dart';
 class ProgressRing extends StatelessWidget {
   final int steps;
   final int goal;
-  const ProgressRing({super.key, required this.steps, required this.goal});
+  final Widget? child;
+  const ProgressRing({super.key, required this.steps, required this.goal, this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -16,16 +17,17 @@ class ProgressRing extends StatelessWidget {
         height: 220,
         width: 220,
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('$steps', style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: StepGoTheme.primary)),
-              const SizedBox(height: 4),
-              const Text('steps'),
-              const SizedBox(height: 4),
-              Text('${(goal - steps).clamp(0, goal)} to go', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: StepGoTheme.muted)),
-            ],
-          ),
+          child: child ??
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('$steps', style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: StepGoTheme.primary)),
+                  const SizedBox(height: 4),
+                  const Text('steps'),
+                  const SizedBox(height: 4),
+                  Text('${(goal - steps).clamp(0, goal)} to go', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: StepGoTheme.muted)),
+                ],
+              ),
         ),
       ),
     );

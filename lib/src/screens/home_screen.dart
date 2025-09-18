@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
 import 'package:steps_counter_app/src/providers/app_state.dart';
@@ -18,7 +19,7 @@ class HomeScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
         children: [
-          // Greeting banner
+          // Greeting banner,
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
@@ -35,8 +36,12 @@ class HomeScreen extends StatelessWidget {
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                   ]),
                 ),
-                const SizedBox(width: 12),
-                const Icon(Icons.directions_walk, color: Colors.white, size: 40),
+                const SizedBox(width: 20),
+                SizedBox(
+                  width: 70,
+                  height: 70,
+                  child: Lottie.asset('assets/animations/Walker man.json'),
+                ),
               ],
             ),
           ),
@@ -63,7 +68,35 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Center(child: ProgressRing(steps: state.stepsToday, goal: state.stepGoal)),
+                Center(
+                  child: ProgressRing(
+                    steps: state.stepsToday,
+                    goal: state.stepGoal,
+                    child: SizedBox(
+                      height: 180,
+                      width: 180,
+                      child: Lottie.asset('assets/animations/walking in city park.json'),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      text: '${state.stepsToday}',
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                            color: StepGoTheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                      children: [
+                        TextSpan(
+                            text: '\n/ ${state.stepGoal} Goal',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600)),
+                      ],
+                    ),
+                  ),
+                ),
               ]),
             ),
           ),

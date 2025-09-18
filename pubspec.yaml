@@ -25,6 +25,7 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
+
   # For notifications
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.4
@@ -53,6 +54,9 @@ dependencies:
   # For path/icons
   path_provider: ^2.1.5
   flutter_svg: ^2.0.10+1
+
+  # For 3D model viewer
+  model_viewer_plus: ^1.7.1
   
   # For device info
   device_info_plus: ^10.1.2
@@ -75,6 +79,7 @@ dependencies:
   firebase_ui_auth: ^1.12.0
   workmanager: ^0.9.0+3
   connectivity_plus: ^6.1.5
+  
 
 dev_dependencies:
   flutter_test:
