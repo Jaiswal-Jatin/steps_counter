@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:steps_counter_app/src/providers/app_state.dart';
 import 'package:steps_counter_app/src/screens/edit_profile_screen.dart';
+import 'package:steps_counter_app/src/services/notification_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  // Get the singleton instance of the NotificationService
+  static final _notificationService = NotificationService();
 
   @override
   Widget build(BuildContext context) {
@@ -101,18 +105,48 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 _toggle('Milestone Notifications', state.milestoneNotifications, state.setMilestoneNotifications),
                 const Divider(),
-                _toggle('Water Reminders', state.waterReminders, state.setWaterReminders),
+                // Water Reminders Toggle
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Water Reminders'),
+                  value: state.waterReminders,
+                  onChanged: (bool value) async {
+                    // 1. Persist the toggle state via the provider
+                    await state.setWaterReminders(value);
+
+                    // 2. Schedule or cancel notifications
+                    if (value) {
+                      // Use context.read in a callback
+                      final interval = context.read<AppState>().waterInterval;
+                      await _notificationService.scheduleReminders(interval.inHours);
+                    } else {
+                      await _notificationService.cancelReminders();
+                    }
+                  },
+                ),
                 Row(children: [
                   const Text('Remind me every'),
                   const Spacer(),
                   DropdownButton<int>(
                     value: state.waterInterval.inMinutes,
                     items: const [
+                      // The interval is now in hours as per the requirement
                       DropdownMenuItem(value: 60, child: Text('1 hr')),
                       DropdownMenuItem(value: 120, child: Text('2 hr')),
                       DropdownMenuItem(value: 180, child: Text('3 hr')),
                     ],
-                    onChanged: (v) { if (v != null) state.setWaterInterval(Duration(minutes: v)); },
+                    onChanged: (v) async {
+                      if (v != null) {
+                        final newInterval = Duration(minutes: v);
+                        // 1. Persist the new interval
+                        await state.setWaterInterval(newInterval);
+
+                        // 2. If reminders are on, reschedule with the new interval
+                        if (context.read<AppState>().waterReminders) {
+                          await _notificationService.scheduleReminders(newInterval.inHours);
+                        }
+                      }
+                    },
                   ),
                 ]),
               ]),

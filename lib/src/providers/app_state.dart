@@ -118,7 +118,7 @@ class AppState extends ChangeNotifier {
     await _loadUserName();
     _ensureTodayEntrySaved();
     if (waterReminders) {
-      _notifier.scheduleWaterReminders(every: waterInterval, enable: true);
+      await _notifier.scheduleReminders(waterInterval.inHours);
     }
     _isInitializing = false;
     notifyListeners();
@@ -368,7 +368,10 @@ class AppState extends ChangeNotifier {
     if (!milestoneNotifications) return;
     final thousand = (stepsToday ~/ 1000);
     if (thousand > _lastThousandNotified && thousand > 0) {
-      _notifier.simple('Milestone', 'You reached ${thousand * 1000} steps!');
+      _notifier.showSimpleNotification(
+        title: 'Milestone',
+        body: 'You reached ${thousand * 1000} steps!',
+      );
       _lastThousandNotified = thousand;
     }
     final progress = ((stepsToday / stepGoal) * 100).clamp(0, 100).round();
@@ -377,7 +380,10 @@ class AppState extends ChangeNotifier {
     else if (progress >= 50) bucket = 50;
     else if (progress >= 25) bucket = 25;
     if (bucket > _lastProgressBucket) {
-      _notifier.simple('Great progress', '$bucket% of your daily goal done.');
+      _notifier.showSimpleNotification(
+        title: 'Great progress',
+        body: '$bucket% of your daily goal done.',
+      );
       _lastProgressBucket = bucket;
     }
   }
@@ -400,7 +406,6 @@ class AppState extends ChangeNotifier {
   Future<void> setWaterReminders(bool v) async {
     if (waterReminders == v) return;
     waterReminders = v;
-    _notifier.scheduleWaterReminders(every: waterInterval, enable: v);
     notifyListeners();
     await _saveUserData(); // Persist change
   }
@@ -408,7 +413,6 @@ class AppState extends ChangeNotifier {
   Future<void> setWaterInterval(Duration d) async {
     if (waterInterval == d) return;
     waterInterval = d;
-    if (waterReminders) _notifier.scheduleWaterReminders(every: d, enable: true);
     notifyListeners();
     await _saveUserData(); // Persist change
   }

@@ -385,7 +385,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         barRods: [
           BarChartRodData(
             toY: steps,
-            color: steps >= goal ? StepGoTheme.accent : StepGoTheme.primary,
+            color: steps >= goal ? StepGoTheme.primary : StepGoTheme.muted,
             width: (MediaQuery.of(context).size.width - 80) / (values.length * 1.5),
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(4),
@@ -462,7 +462,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         horizontalLines: [
           HorizontalLine(
             y: goal,
-            color: StepGoTheme.accent.withOpacity(0.5),
+            color: StepGoTheme.primary.withOpacity(0.5),
             strokeWidth: 2,
             dashArray: [5, 5],
             label: HorizontalLineLabel(
@@ -470,7 +470,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               labelResolver: (_) => 'Goal',
               alignment: Alignment.topRight,
               padding: const EdgeInsets.only(right: 4, bottom: 2),
-              style: TextStyle(color: StepGoTheme.accent, fontSize: 10),
+              style: TextStyle(color: StepGoTheme.primary, fontSize: 10),
             ),
           ),
         ],

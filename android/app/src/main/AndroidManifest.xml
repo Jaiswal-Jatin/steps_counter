@@ -17,7 +17,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 
     <application
-        android:label="Steps Counter"
+        android:label="StepGo"
         android:name="com.example.steps_conter_app.MainApplication"
         android:icon="@mipmap/ic_launcher" android:enableOnBackInvokedCallback="true">
 
@@ -25,7 +25,7 @@
         <receiver
             android:name=".StepsWidgetProvider"
             android:exported="false"
-            android:label="Steps Counter Widget">
+            android:label="StepGo Widget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="es.antonborri.home_widget.action.HOME_WIDGET_UPDATE" />

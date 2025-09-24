@@ -6,7 +6,7 @@
     android:viewportHeight="110">
     
     <path
-        android:fillColor="#6C5CE7"
+        android:fillColor="#D46600FF"
         android:pathData="M0,8C0,3.58 3.58,0 8,0L242,0C246.42,0 250,3.58 250,8L250,102C250,106.42 246.42,110 242,110L8,110C3.58,110 0,106.42 0,102L0,8Z" />
     
     <text
@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:x="125dp"
         android:y="30dp"
-        android:text="Steps Counter"
+        android:text="StepGo"
         android:textAlignment="center"
         android:textColor="#FFFFFF"
         android:textSize="12sp" />
